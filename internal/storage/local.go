@@ -3,40 +3,40 @@ package storage
 import (
 	"fmt"
 	"sync"
+
+	"pet-bidder/internal/types"
 )
 
-type Campaign struct {
-}
-
 type LocalStorage struct {
-	data map[string]*Campaign
-	mu   sync.Mutex
+	campaigns []types.AdCampaign
+	mu        sync.Mutex
 }
 
 // NewLocalStorage creates a new storage instance
 func NewLocalStorage() *LocalStorage {
 	return &LocalStorage{
-		data: make(map[string]*Campaign),
+		campaigns: make([]types.AdCampaign, 0),
 	}
 }
 
-func (s *LocalStorage) Set(key string, campaign *Campaign) (err error) {
+func (s *LocalStorage) Set(campaign *types.AdCampaign) error {
 	if campaign == nil {
 		return fmt.Errorf("not valid or missed campaigh")
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.data[key] = campaign
+	s.campaigns = append(s.campaigns, *campaign)
 
-	return err
+	return nil
 }
 
-func (s *LocalStorage) Get(key string) (*Campaign, error) {
+func (s *LocalStorage) BulkSet(campaigns []types.AdCampaign) error {
+	if len(campaigns) <= 0 {
+		return fmt.Errorf("no data to set")
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	campaign, ok := s.data[key]
-	if !ok {
-		return nil, fmt.Errorf("item not found: %s", key)
-	}
-	return campaign, nil
+	s.campaigns = append(s.campaigns, campaigns...)
+
+	return nil
 }

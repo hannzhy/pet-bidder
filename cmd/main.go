@@ -23,6 +23,12 @@ func main() {
 		return
 	}
 
+	err = serv.FillStorage()
+	if err != nil {
+		log.Fatalf("Failed on fill storage with initial data: %v\n", err)
+		return
+	}
+
 	// Listen to Unix signals
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)

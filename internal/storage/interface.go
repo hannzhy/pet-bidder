@@ -1,6 +1,8 @@
 package storage
 
+import "pet-bidder/internal/types"
+
 type Storage interface {
-	Set(key string, value *Campaign) error
-	Get(key string) (*Campaign, error)
+	BulkSet(campaigns []types.AdCampaign) error
+	Set(campaign *types.AdCampaign) error
 }
