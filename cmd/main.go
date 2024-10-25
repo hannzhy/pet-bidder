@@ -2,23 +2,43 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"pet-bidder/internal/bidder"
+	"pet-bidder/internal/config"
 )
 
 func main() {
-	fmt.Println("Hello")
+	cfg, err := config.ParseConfig()
+	if err != nil {
+		log.Fatalf("Failed on parse config: %v\n", err)
+	}
 
-	// TODO: use some router lib instead
-	http.HandleFunc("/bid", handleBidder)
-	http.HandleFunc("/win", handleWin)
-}
+	serv, err := bidder.NewServer(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port))
+	if err != nil {
+		log.Fatalf("Failed on init server: %v\n", err)
+		return
+	}
 
-func handleBidder(w http.ResponseWriter, r *http.Request) {
-	// TODO: handle
+	// Listen to Unix signals
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 
-}
+	go func() {
+		s := <-sig
+		log.Printf("Received signal %s. Close the Server.\n", s.String())
+		err := serv.Close()
+		if err != nil {
+			log.Printf("Server failed on Close: %v\n", err)
+		}
+	}()
 
-func handleWin(w http.ResponseWriter, r *http.Request) {
-	// TODO: implement
-
+	log.Println("Server Running...")
+	err = serv.Run()
+	if err != nil {
+		log.Fatalf("Server Error: %v\n", err)
+	}
 }
